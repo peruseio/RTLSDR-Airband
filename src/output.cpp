@@ -319,7 +319,7 @@ static void close_file(output_t* output) {
 
     // close all mp3 files for every output that has a lame context
     if (fdata->type == O_FILE && fdata->f && output->lame) {
-        int encoded = lame_encode_flush_nogap(output->lame, output->lamebuf, LAMEBUF_SIZE);
+        int encoded = lame_encode_flush(output->lame, output->lamebuf, LAMEBUF_SIZE);
         debug_print("closing file %s flushed %d\n", fdata->file_path.c_str(), encoded);
 
         if (encoded > 0) {
@@ -531,7 +531,13 @@ void process_outputs(channel_t* channel, int cur_scan_freq) {
             const auto& lamebuf = channel->outputs[k].lamebuf;
             int mp3_bytes = 0;
             if (channel->outputs[k].type == O_FILE) {
-                mp3_bytes = lame_encode_buffer_ieee_float(lame, channel->waveout, (channel->mode == MM_STEREO ? channel->waveout_r : NULL), WAVE_BATCH, lamebuf, LAMEBUF_SIZE);
+                // In continuous mode, encode silence instead of noise when squelch is closed
+                if (fdata->continuous && channel->axcindicate == NO_SIGNAL) {
+                    float silence[WAVE_BATCH] = {};
+                    mp3_bytes = lame_encode_buffer_ieee_float(lame, silence, (channel->mode == MM_STEREO ? silence : NULL), WAVE_BATCH, lamebuf, LAMEBUF_SIZE);
+                } else {
+                    mp3_bytes = lame_encode_buffer_ieee_float(lame, channel->waveout, (channel->mode == MM_STEREO ? channel->waveout_r : NULL), WAVE_BATCH, lamebuf, LAMEBUF_SIZE);
+                }
                 if (mp3_bytes < 0) {
                     log(LOG_WARNING, "lame_encode_buffer_ieee_float: %d\n", mp3_bytes);
                 }

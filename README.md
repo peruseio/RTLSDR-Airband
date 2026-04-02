@@ -28,6 +28,14 @@ supported by the program was Realtek DVB-T dongle (hence the project's
 name). However, thanks to SoapySDR vendor-neutral SDR library, other
 radios are now supported as well.
 
+## Squelch and Continuous File Recording
+
+RTLSDR-Airband includes an automatic noise floor tracker (`src/squelch.cpp`) that continuously monitors the background noise level on each channel. The squelch opens when a signal exceeds the noise floor by a configurable SNR threshold (default: ~10 dB). This is controlled by the `squelch_snr_threshold` config parameter per channel.
+
+When file outputs use `continuous = true`, the recorder produces fixed-length files (one per hour) with no gaps. During periods with no signal (squelch closed), silence is encoded instead of RF noise. This results in clean audio files where transmissions are heard clearly and quiet periods are actual silence.
+
+Note: The old `squelch` parameter (integer dBFS) is deprecated in v5.x and ignored. Use `squelch_snr_threshold` (SNR dB above noise floor) or `squelch_threshold` (absolute dBFS) instead.
+
 ## Documentation
 
 User's manual is now on the [wiki](https://github.com/rtl-airband/RTLSDR-Airband/wiki).
